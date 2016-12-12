@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Retry Stripe Events</title>
+    <link rel="stylesheet" type="text/css" href="/styles/form.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(function() {
+
+
+
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <form id="contact" action="" method="post">
+        <h3>Retry Events</h3>
+        <h4>Place all of the Event IDs you need retried in a comma-separated list below.</h4>
+        <fieldset>
+          <textarea tabindex="1" name="event_ids" placeholder="evt_xxx, evt_yyy, evt_zzz" required autofocus></textarea>
+        </fieldset>
+        <fieldset>
+          <input placeholder="Secret API Key (eg. sk_live_xxx)" type="password" tabindex="2" required>
+        </fieldset>
+        <fieldset>
+          <button name="submit" type="submit" id="contact-submit" data-submit="...Sending">Submit</button>
+        </fieldset>
+      </form>
+    </div>
+  </body>
+</html>

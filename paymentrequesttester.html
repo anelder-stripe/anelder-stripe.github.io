@@ -101,11 +101,11 @@
 
       // Populate Publishable Key from querystring
       var pk = ap.getPublishableKey();
-      if (pk) { $('#pk-input').val(pk); }
+      if (pk !== '' && pk !== null) { $('#pk-input').val(pk); }
 
       // Populate Account ID from querystring
       var acc = ap.getAccountId();
-      if (acc) { $('#acc-input').val(acc); }
+      if (acc !== '' && acc !== null) { $('#acc-input').val(acc); }
 
       // Initialize Stripe
       var stripe = null;

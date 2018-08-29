@@ -28,7 +28,22 @@
         float: left;
         width: 49%;
       }
+
+      #apple-pay-button {
+        display: none;
+        background-color: black;
+        background-image: -webkit-named-image(apple-pay-logo-white);
+        background-size: 100% 100%;
+        background-origin: content-box;
+        background-repeat: no-repeat;
+        width: 100%;
+        height: 44px;
+        padding: 10px 0;
+        border-radius: 10px;
+      }
+
     </style>
+    <script src="https://js.stripe.com/v2/"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <script>
@@ -53,17 +68,17 @@
           var stripe = null;
           if (pk && acc) {
             // Connect Platform
-            $('#account-setup-result').html("Initializing connected account w/ key and account: " + pk + " - " + acc);
+            document.getElementById('account-setup-result').innerHTML = "Initializing connected account w/ key and account: " + pk + " - " + acc;
             stripe = Stripe(pk, {stripeAccount: acc});
           }
           if (pk && !acc) {
             // Standard Account
-            $('#account-setup-result').html("Initializing standard account w/ key: " + pk);
+            document.getElementById('account-setup-result').innerHTML = "Initializing standard account w/ key: " + pk;
             stripe = Stripe(pk);
           }
           if (!pk) {
             // No publishable key provided
-            $('#account-setup-result').html("No publishable key has been provided.  Not configuring Stripe yet.");
+            document.getElementById('account-setup-result').innerHTML = "No publishable key has been provided.  Not configuring Stripe yet.";
           }
           return stripe;
         },
@@ -76,36 +91,67 @@
 
           var headers = {}
           headers['Authorization'] = 'Bearer ' + sk;
-          if (this.getAccountId()) {
-            headers['Stripe-Account'] = this.getAccountId();
-          }
+
           console.log(this.getDomain());
-          $.ajax({
-            url: 'https://api.stripe.com/v1/apple_pay/domains',
-            data: {domain_name: this.getDomain()},
-            headers: headers,
-            cache: false,
-            type: 'POST',
-          }).done(function(data) {
-            var resp = JSON.stringify(data, null, 2);
-            resultElement.html(resp);
-          }).fail(function(response, type, message) {
-            var resp = JSON.stringify(response.responseJSON, null, 2);
-            resultElement.html(resp);
-          });
+
+          xhr = new XMLHttpRequest();
+          xhr.open('POST', 'https://api.stripe.com/v1/apple_pay/domains');
+          xhr.setRequestHeader('Authorization', 'Bearer ' + sk);
+          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          if (this.getAccountId()) {
+            xhr.setRequestHeader('Stripe-Account', this.getAccountId());
+          }
+          xhr.onload = function() {
+            console.log(xhr.responseText);
+            resultElement.innerHTML = xhr.responseText;
+          };
+          xhr.send(encodeURI('domain_name=' + this.getDomain()));
+
+        },
+        handleApplePaySubmit: function() {
+
+          var paymentRequest = {
+            countryCode: 'US',
+            currencyCode: 'USD',
+            total: {
+              label: 'Stripe.com',
+              amount: '0.01',
+              type: 'pending'
+            }
+          };
+
+        	console.log(paymentRequest);
+
+          var session = Stripe.applePay.buildSession(paymentRequest,
+            function(result, completion) {
+        		  console.log(result);
+            },
+            function(error) {
+              console.log(error.message);
+            }
+          );
+
+        	console.log(session);
+
+          session.oncancel = function() {
+            console.log("User hit the cancel button in the payment window");
+          };
+
+          session.begin();
+
         }
       }
     </script>
     <script>
-    $(document).ready(function() {
+    document.addEventListener("DOMContentLoaded", function(event) {
 
       // Populate Publishable Key from querystring
       var pk = ap.getPublishableKey();
-      if (pk !== '' && pk !== null) { $('#pk-input').val(pk); }
+      if (pk !== '' && pk !== null) { document.getElementById('pk-input').value = pk; }
 
       // Populate Account ID from querystring
       var acc = ap.getAccountId();
-      if (acc !== '' && acc !== null) { $('#acc-input').val(acc); }
+      if (acc !== '' && acc !== null) { document.getElementById('acc-input').value = acc; }
 
       // Initialize Stripe
       var stripe = null;
@@ -113,6 +159,9 @@
         stripe = ap.initializeStripe();
       }
 
+      /*
+      * BUILD PAYMENTREQUEST BUTTON
+      */
       var elements = null;
       var paymentRequest = null;
       var paymentRequestButton = null;
@@ -144,19 +193,36 @@
             paymentRequestButton.mount('#payment-request-button');
           } else {
             // Hide the payment request button div (if not supported)
-            $('#payment-request-button').hide();
+            document.getElementById('payment-request-button').display = 'none';
             console.log(result);
           }
+        });
 
+        /*
+        * BUILD APPLE PAY BUTTON
+        */
+        Stripe.setPublishableKey(pk);
+        Stripe.applePay.checkAvailability(function(available) {
+            if (available) {
+            	console.log("Available!");
+              document.getElementById('apple-pay-button').style.display = 'block';
+            }
+        		console.log("Done!");
         });
       }
 
       // Catch domain registration submissions
-      $('#register-domain-form').on('submit', function (e) {
+      document.getElementById('register-domain-form').addEventListener('submit', function (e) {
         e.preventDefault();
-        ap.registerDomain($('#sk-input').val().trim(), $('#register-domain-result'));
+        ap.registerDomain(
+          document.getElementById('sk-input').value.trim(),
+          document.getElementById('register-domain-result')
+        );
         return false;
       });
+
+      // Catch ApplePay button clicks
+      document.getElementById('apple-pay-button').addEventListener('click', ap.handleApplePaySubmit);
 
     });
     </script>
@@ -188,6 +254,10 @@
       <div id="payment-request-button">
       <!-- A Stripe Element will be inserted here. -->
       </div>
+    </div>
+    <div class="container">
+      <h3>Apple Pay Button</h3>
+      <button id="apple-pay-button"></button>
     </div>
   </body>
 </html>

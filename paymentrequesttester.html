@@ -120,18 +120,18 @@
             }
           };
 
-        	console.log(paymentRequest);
+          console.log(paymentRequest);
 
           var session = Stripe.applePay.buildSession(paymentRequest,
             function(result, completion) {
-        		  console.log(result);
+              console.log(result);
             },
             function(error) {
               console.log(error.message);
             }
           );
 
-        	console.log(session);
+          console.log(session);
 
           session.oncancel = function() {
             console.log("User hit the cancel button in the payment window");
@@ -204,10 +204,10 @@
         Stripe.setPublishableKey(pk);
         Stripe.applePay.checkAvailability(function(available) {
             if (available) {
-            	console.log("Available!");
+              console.log("Available!");
               document.getElementById('apple-pay-button').style.display = 'block';
             }
-        		console.log("Done!");
+            console.log("Done!");
         });
       }
 
